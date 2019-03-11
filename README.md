@@ -1,18 +1,18 @@
-# packer-proxmoxbeta
+# packer-proxmox
 
-[![CircleCI](https://img.shields.io/circleci/project/pwasiewi/packer-proxmoxbeta.svg?maxAge=2592000)](https://circleci.com/gh/pwasiewi/packer-proxmoxbeta)
+[![CircleCI](https://img.shields.io/circleci/project/pwasiewi/packer-proxmox.svg?maxAge=2592000)](https://circleci.com/gh/pwasiewi/packer-proxmox)
 
 packer template to build Proxmox Server images
 
-vagrant images are available at the [42n4 vagrant account](https://app.vagrantup.com/42n4/boxes/proxmoxbeta).
+vagrant images are available at the [42n4 vagrant account](https://app.vagrantup.com/42n4/boxes/proxmox).
 
 ## Building Images
 
 To build images, simply run:
 
 ```
-git clone https://github.com/pwasiewi/packer-proxmoxbeta
-cd packer-proxmoxbeta
+git clone https://github.com/pwasiewi/packer-proxmox
+cd packer-proxmox
 export VAGRANT_CLOUD_TOKEN=the token string taken from Vagrant https://app.vagrantup.com/settings/tokens
 packer build -only=virtualbox-iso template.json
 ```
@@ -27,14 +27,14 @@ packer build -only=qemu template.json
 
 ## Setting up the proxmox cluster (START FOR BEGINNERS!)
 
-Next (or HERE YOU START and use my image 42n4/promoxbeta without doing your own one), 
+Next (or HERE YOU START and use my image 42n4/promox without doing your own one), 
 try to execute it in a new directory in order to have the 3 server cluster:  
 
 ```
-#vagrant destroy -f #remove ALL previous instances
+#vagrant destroy -f #remove ALL previous vm instances
 #vagrant box update #update this box in order to have my newest image
 mkdir vProxmox && cd vProxmox
-wget https://raw.githubusercontent.com/pwasiewi/packer-proxmoxbeta/master/Vagrantfile.3hosts -O Vagrantfile
+wget https://raw.githubusercontent.com/pwasiewi/packer-proxmox/master/Vagrantfile.3hosts -O Vagrantfile
 sed -i 's/192.168.0/192.168.<your local net number>/g' Vagrantfile
 sed -i 's/enp0s31f6/eth0/g' Vagrantfile # you change the host bridge name if it is not 'enp0s31f6'
 #in MSWin it gives you names: VBoxManage.exe list bridgedifs
@@ -55,11 +55,7 @@ and execute:
 
 ```
 va_hosts4ssh server  #password: packer
-pvecm create kluster
-sleep 5
-for i in server2 server3; do ssh $i "pvecm add server1"; done
-for i in server3 server2; do ssh $i "reboot"; done
-reboot
+va_pveclustercreate
 ```
 
 `vagrant ssh server1`
@@ -71,18 +67,7 @@ sudo su -
 ae "apt-get update"
 ae "apt-get install -y ceph"
 pveceph init --network 192.168.<YOUR_NET>.0/24 #CHANGE TO YOUR NET
-for i in server1 server2 server3; do ssh $i "pveceph createmon"; done
-for i in server1 server2 server3; do ssh $i "ceph-disk zap /dev/sdb" && ssh $i "pveceph createosd /dev/sdb" && ssh $i "partprobe /dev/sdb1"; done
-cd /etc/pve/priv/
-mkdir ceph
-cp /etc/ceph/ceph.client.admin.keyring ceph/rbd.keyring
-ceph -s                          #ceph should be online
-ceph osd lspools                 #look at the pools!
-ceph osd pool create rbd 128     #create pool if not present
-ceph osd pool set rbd size 2     #replica number
-ceph osd pool set rbd min_size 1 #min replica number after e.g. server failure
-ceph osd pool application enable rbd rbd
-rbd pool init rbd
+va_pvecephcreate
 #GUI proxmox in a host browser: https://192.168.<YOUR_NET>.71:8006
 #add in GUI rdb storage named ceph4vm with monitor hosts: 192.168.<YOUR_NET>.71 192.168.<YOUR_NET>.72 192.168.<YOUR_NET>.73 #CHANGE TO YOUR NET 
 #it should be added automatically
@@ -90,11 +75,7 @@ rbd pool init rbd
 #net configs corrected, vmbr0 moved to the the second NIC2 
 #first NIC1 is dedicated to vagrant NAT inner communication.
 cd
-ae "rm -f ~/interfaces && cp /usr/local/bin/va_interfaces ~/interfaces"
-for i in server1 server2 server3; do ssh $i "sed -i 's/192.168.2.71/'`grep $i /etc/hosts | awk  '{ print $1}'`'/g' ~/interfaces && cat ~/interfaces"; done && \
-ae "rm -f /etc/network/interfaces && cp ~/interfaces /etc/network/interfaces" && \
-ae "cat /etc/network/interfaces"
-for i in server3 server2; do ssh $i "reboot"; done && reboot
+va_exchangenics
 ```
 
 `vagrant ssh server1`
@@ -108,11 +89,7 @@ Next time: `vagrant up && vagrant ssh server1`
 ```
 #after vagrant up, again correct the net configs (removing vagrant public network settings)
 sudo su -
-ae "rm -f ~/interfaces && cp /usr/local/bin/va_interfaces ~/interfaces"
-for i in server1 server2 server3; do ssh $i "sed -i 's/192.168.2.71/'`grep $i /etc/hosts | awk  '{ print $1}'`'/g' ~/interfaces && cat ~/interfaces"; done && \
-ae "rm -f /etc/network/interfaces && cp ~/interfaces /etc/network/interfaces" && \
-ae "cat /etc/network/interfaces"
-for i in server3 server2; do ssh $i "reboot"; done && reboot
+va_exchangenics
 ```
 
 After reboot try to check if all servers and their ceph osds are up. Reset them until they are all up.
