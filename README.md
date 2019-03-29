@@ -62,12 +62,17 @@ va_hosts4ssh server  #password: packer
 va_pveclustercreate
 ```
 
-`vagrant ssh server1`
-
+```
+vagrant port server1
+scp -P 2222 /etc/resolv.conf root@127.0.0.1:/etc
+vagrant ssh server1
+```
 Login again: 
 
 ```
 sudo su -
+scp /etc/resolv.conf server2:/etc
+scp /etc/resolv.conf server3:/etc
 ae "apt-get update"
 ae "apt-get install -y ceph"
 pveceph init --network 192.168.<YOUR_NET>.0/24 #CHANGE TO YOUR NET
