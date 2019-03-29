@@ -63,7 +63,7 @@ va_pveclustercreate
 ```
 
 ```
-vagrant port server1
+vagrant port server1 #note the port at the host site
 scp -P 2222 /etc/resolv.conf root@127.0.0.1:/etc
 vagrant ssh server1
 ```
