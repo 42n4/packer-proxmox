@@ -91,10 +91,11 @@ systemctl enable rc-local
 update-rc.d kmod enable
 curl ix.io/client > /usr/local/bin/ix
 chmod +x /usr/local/bin/ix
-echo "T" | pveceph install -version luminous
 [ ! -d /etc/ceph ] && mkdir /etc/ceph
 ln -sfn /etc/pve/ceph.conf  /etc/ceph/ceph.conf  
 cd
 curl https://pastebin.com/raw/anHdueta | sed 's/\r//g' > VAskryptfunkcje.sh
 sh VAskryptfunkcje.sh
 curl https://pastebin.com/raw/Ey6qHu37 | sed 's/\r//g' > VAskryptglownyMiniUbuntu.txt 
+echo "T" | pveceph install -version luminous
+echo "Y" | pveceph install -version luminous

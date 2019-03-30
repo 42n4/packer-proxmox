@@ -3,11 +3,11 @@ $ip02="72"
 $ip03="73"
 #in MSWin it gives you names: VBoxManage.exe list bridgedifs
 #$bridge = "Intel(R) Ethernet Connection (2) I219-V"
-$bridge = "enp0s31f6"
-#$bridge="wlp3s0"
+#$bridge = "enp0s31f6"
+$bridge="wlp4s0"
 #$box = "42n4/UbuntuServerYakkety"
 $box="42n4/proxmox"
-$net="192.168.1."
+$net="192.168.43."
 servers=[
   {
     :hostname => "server1",
